@@ -71,6 +71,20 @@ augroup MyFavorites2
 augroup END
 ```
 
+Multi definitions can be gathers into one table.
+
+```lua
+require'agrp'.set{
+  MyFiledetect = {
+    ['BufNewFile,BufRead'] = {
+      {'*.hoge', 'set filetype=hoge'},
+      {'*.fuga', 'set filetype=fuga'},
+      {'*.foo', 'set filetype=foo'},
+    },
+  },
+}
+```
+
 ## Caveats
 
 This plugin itself will be deprecated when the [official PR][] or similar one will be merged.
