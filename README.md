@@ -71,7 +71,7 @@ augroup MyFavorites2
 augroup END
 ```
 
-Multi definitions can be gathers into one table.
+Multi definitions can be gathered into one table.
 
 ```lua
 require'agrp'.set{
