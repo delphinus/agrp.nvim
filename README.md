@@ -12,6 +12,8 @@ Yes, there is [official PR][] for the same purpose, but it shows no signs of bei
 
 ## Usage
 
+### Standard augroup & autocmd
+
 ```lua
 require'agrp'.set{
   MyHelloWorld = {
@@ -38,6 +40,8 @@ augroup MyFavorites
   autocmd QuickFixCmdPost *grep* cwindow
 augroup END
 ```
+
+### Bind with Lua functions
 
 It can binds Lua functions.
 
@@ -71,6 +75,8 @@ augroup MyFavorites2
 augroup END
 ```
 
+### Multi definitions for one event
+
 Multi definitions can be gathered into one table.
 
 ```lua
@@ -81,6 +87,22 @@ require'agrp'.set{
       {'*.fuga', 'set filetype=fuga'},
       {'*.foo', 'set filetype=foo'},
     },
+  },
+}
+```
+
+### `++once` and `++nested` options
+
+Options for autocmd should be set in a table just before the command (or Lua function).
+
+```lua
+require'agrp'.set{
+  RunOnlyOnce = {
+    {'InsertCharPre', '*', {'once'}, function()
+      vim.api.nvim_echo({
+        {'Inserting a char: '..vim.v.char, 'WarningMsg'},
+      }, false, {})
+    end},
   },
 }
 ```

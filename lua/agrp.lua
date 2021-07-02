@@ -6,7 +6,20 @@ local M = {
   end)()
 }
 
-local function make_command(events, patterns, cmd_or_func)
+local function make_command(events, patterns, ...)
+  local args = {...}
+  local options, cmd_or_func
+  if #args == 2 then
+    options = args[1]
+    cmd_or_func = args[2]
+  else
+    options = {}
+    cmd_or_func = args[1]
+  end
+  local opts = ''
+  for _, o in ipairs(options) do
+    opts = ('%s ++%s'):format(opts, o)
+  end
   local command
   if type(cmd_or_func) == 'string' then
     command = cmd_or_func
@@ -14,7 +27,7 @@ local function make_command(events, patterns, cmd_or_func)
     table.insert(M.funcs, cmd_or_func)
     command = ([[lua require'%s'.funcs[%d]()]]):format(M.my_name, #M.funcs)
   end
-  return ('autocmd %s %s %s'):format(events, patterns, command)
+  return ('autocmd %s %s%s %s'):format(events, patterns, opts, command)
 end
 
 M.set = function(groups)
@@ -30,17 +43,17 @@ M.set = function(groups)
         definition = {definition, 'table'},
       }
       if type(key) == 'number' then
-        if #definition == 3 then
+        if #definition == 3 or #definition == 4 then
           table.insert(cmds, make_command(unpack(definition)))
         else
-          error'each definition should have 3 values'
+          error'each definition should have 3 values (+options (once, nested))'
         end
       else
         for _, d in ipairs(definition) do
-          if #d == 2 then
+          if #d == 2 or #d == 3 then
             table.insert(cmds, make_command(key, unpack(d)))
           else
-            error'each definition should have 2 values'
+            error'each definition should have 2 values (+options (once, nested))'
           end
         end
       end
