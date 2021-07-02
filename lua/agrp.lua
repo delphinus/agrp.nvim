@@ -30,37 +30,46 @@ local function make_command(events, patterns, ...)
   return ('autocmd %s %s%s %s'):format(events, patterns, opts, command)
 end
 
-M.set = function(groups)
-  vim.validate{groups = {groups, 'table'}}
-  for name, definitions in pairs(groups) do
+local function manage_definitions(cmds, definitions)
+  for key, definition in pairs(definitions) do
     vim.validate{
-      name = {name, 'string'},
-      definitions = {definitions, 'table'},
+      definition = {definition, 'table'},
     }
-    local cmds = {'augroup '..name, 'autocmd!'}
-    for key, definition in pairs(definitions) do
-      vim.validate{
-        definition = {definition, 'table'},
-      }
-      if type(key) == 'number' then
-        if #definition == 3 or #definition == 4 then
-          table.insert(cmds, make_command(unpack(definition)))
-        else
-          error'each definition should have 3 values (+options (once, nested))'
-        end
+    if type(key) == 'number' then
+      if #definition == 3 or #definition == 4 then
+        table.insert(cmds, make_command(unpack(definition)))
       else
-        for _, d in ipairs(definition) do
-          if #d == 2 or #d == 3 then
-            table.insert(cmds, make_command(key, unpack(d)))
-          else
-            error'each definition should have 2 values (+options (once, nested))'
-          end
+        error'each definition should have 3 values (+options (once, nested))'
+      end
+    else
+      for _, d in ipairs(definition) do
+        if #d == 2 or #d == 3 then
+          table.insert(cmds, make_command(key, unpack(d)))
+        else
+          error'each definition should have 2 values (+options (once, nested))'
         end
       end
     end
-    table.insert(cmds, 'augroup END')
-    vim.api.nvim_exec(table.concat(cmds, '\n'), false)
   end
+end
+
+M.set = function(groups)
+  vim.validate{groups = {groups, 'table'}}
+  local cmds = {}
+  for name, definitions in pairs(groups) do
+    vim.validate{
+      definitions = {definitions, 'table'},
+    }
+    if type(name) == 'number' then
+      manage_definitions(cmds, definitions)
+    else
+      table.insert(cmds, 'augroup '..name)
+      table.insert(cmds, 'autocmd!')
+      manage_definitions(cmds, definitions)
+      table.insert(cmds, 'augroup END')
+    end
+  end
+  vim.api.nvim_exec(table.concat(cmds, '\n'), false)
 end
 
 return M

@@ -91,6 +91,24 @@ require'agrp'.set{
 }
 ```
 
+### autocmd without augroup
+
+For ftdetct, you can define autocmd without any augroup.
+
+NOTE: This is not recommended for the normal use of autocmd.
+
+```lua
+require'agrp'.set{
+  {
+    ['BufNewFile,BufRead'] = {
+      {'*.hoge', 'set filetype=hoge'},
+      {'*.fuga', 'set filetype=fuga'},
+      {'*.foo', 'set filetype=foo'},
+    },
+  },
+}
+```
+
 ### `++once` and `++nested` options
 
 Options for autocmd should be set in a table just before the command (or Lua function).
