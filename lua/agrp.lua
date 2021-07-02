@@ -30,14 +30,14 @@ M.set = function(groups)
         definition = {definition, 'table'},
       }
       if type(key) == 'number' then
-        if vim.tbl_count(definition) == 3 then
+        if #definition == 3 then
           table.insert(cmds, make_command(unpack(definition)))
         else
           error'each definition should have 3 values'
         end
       else
         for _, d in ipairs(definition) do
-          if vim.tbl_count(d) == 2 then
+          if #d == 2 then
             table.insert(cmds, make_command(key, unpack(d)))
           else
             error'each definition should have 2 values'
