@@ -1,75 +1,63 @@
-local M = {
-  funcs = {},
-  my_name = (function()
-    local file = debug.getinfo(1, "S").source
-    return file:match "/(%a+)%.lua$"
-  end)(),
-}
+local M = {}
 
-local function make_command(events, patterns, ...)
-  local args = { ... }
-  local options, cmd_or_func
-  if #args == 2 then
-    options = args[1]
-    cmd_or_func = args[2]
-  else
-    options = {}
-    cmd_or_func = args[1]
-  end
-  local opts = ""
-  for _, o in ipairs(options) do
-    opts = ("%s ++%s"):format(opts, o)
-  end
-  local command
-  if type(cmd_or_func) == "string" then
-    command = cmd_or_func
-  else
-    table.insert(M.funcs, cmd_or_func)
-    command = ([[lua require'%s'.funcs[%d]()]]):format(M.my_name, #M.funcs)
-  end
-  return ("autocmd %s %s%s %s"):format(events, patterns, opts, command)
+local function is_vim_func_string(s)
+  return type(s) == "string" and s:match "^[bwtglsav]:[_%d%w]+$"
 end
 
-local function manage_definitions(cmds, definitions)
+local function manage_definitions(definitions, group)
   for key, definition in pairs(definitions) do
     vim.validate {
       definition = { definition, "table" },
     }
+    local opt = { group = group }
+    local cb_or_cmd
     if type(key) == "number" then
-      if #definition == 3 or #definition == 4 then
-        table.insert(cmds, make_command(unpack(definition)))
+      if #definition == 3 then
+        opt.event = definition[1]
+        opt.pattern = definition[2]
+        cb_or_cmd = definition[3]
+      elseif #definition == 4 then
+        opt.once = definition[1].once and true or false
+        opt.nested = definition[1].nested and true or false
+        opt.event = definition[2]
+        opt.pattern = definition[3]
+        cb_or_cmd = definition[4]
       else
         error "each definition should have 3 values (+options (once, nested))"
       end
     else
       for _, d in ipairs(definition) do
         if #d == 2 or #d == 3 then
-          table.insert(cmds, make_command(key, unpack(d)))
+          opt.event = key
+          opt.pattern = d[1]
+          cb_or_cmd = d[2]
         else
           error "each definition should have 2 values (+options (once, nested))"
         end
       end
     end
+    if type(cb_or_cmd) == "function" or is_vim_func_string(cb_or_cmd) then
+      opt.callback = cb_or_cmd
+    else
+      opt.command = cb_or_cmd
+    end
+    vim.api.nvim_create_autocmd(opt)
   end
 end
 
 M.set = function(groups)
   vim.validate { groups = { groups, "table" } }
-  local cmds = {}
   for name, definitions in pairs(groups) do
     vim.validate {
       definitions = { definitions, "table" },
     }
     if type(name) == "number" then
-      manage_definitions(cmds, definitions)
+      manage_definitions(definitions)
     else
-      table.insert(cmds, "augroup " .. name)
-      table.insert(cmds, "autocmd!")
-      manage_definitions(cmds, definitions)
-      table.insert(cmds, "augroup END")
+      vim.api.nvim_create_augroup { name = name, clear = true }
+      manage_definitions(definitions, name)
     end
   end
-  vim.api.nvim_exec(table.concat(cmds, "\n"), false)
 end
 
 return M
