@@ -10,17 +10,18 @@ local function manage_definitions(definitions, group)
       definition = { definition, "table" },
     }
     local opt = { group = group }
+    local event
     local cb_or_cmd
     if type(key) == "number" then
       if #definition == 3 then
-        opt.event = definition[1]
         opt.pattern = definition[2]
+        event = definition[1]
         cb_or_cmd = definition[3]
       elseif #definition == 4 then
         opt.once = definition[1].once and true or false
         opt.nested = definition[1].nested and true or false
-        opt.event = definition[2]
         opt.pattern = definition[3]
+        event = definition[2]
         cb_or_cmd = definition[4]
       else
         error "each definition should have 3 values (+options (once, nested))"
@@ -28,8 +29,8 @@ local function manage_definitions(definitions, group)
     else
       for _, d in ipairs(definition) do
         if #d == 2 or #d == 3 then
-          opt.event = key
           opt.pattern = d[1]
+          event = key
           cb_or_cmd = d[2]
         else
           error "each definition should have 2 values (+options (once, nested))"
@@ -41,7 +42,7 @@ local function manage_definitions(definitions, group)
     else
       opt.command = cb_or_cmd
     end
-    vim.api.nvim_create_autocmd(opt)
+    vim.api.nvim_create_autocmd(event,opt)
   end
 end
 
@@ -54,7 +55,7 @@ M.set = function(groups)
     if type(name) == "number" then
       manage_definitions(definitions)
     else
-      vim.api.nvim_create_augroup { name = name, clear = true }
+      vim.api.nvim_create_augroup ( name,{} )
       manage_definitions(definitions, name)
     end
   end

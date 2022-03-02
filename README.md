@@ -25,27 +25,22 @@ require'agrp'.set{
 This will execute the script below.
 
 ```lua
-vim.api.nvim_create_augroup { name = "MyHelloWorld", clear = true }
-vim.api.nvim_create_autocmd {
+vim.api.nvim_create_augroup("MyHelloWorld")
+vim.api.nvim_create_autocmd("VimEnter", {
   group = "MyHelloWorld",
-  event = "VimEnter",
-  pattern = "*",
-  callback = [[echo 'Hello World!']],
-}
+  command = [[echo 'Hello World!']],
+})
 
-vim.api.nvim_create_augroup { name = "MyFavorites", clear = true }
-vim.api.nvim_create_autocmd {
+vim.api.nvim_create_augroup("MyFavorites")
+vim.api.nvim_create_autocmd("VimEnter", {
   group = "MyFavorites",
-  event = "VimEnter",
-  pattern = "*",
-  callback = [[doautocmd ColorScheme solarized8]],
-}
-vim.api.nvim_create_autocmd {
+  command = [[doautocmd ColorScheme solarized8]],
+})
+vim.api.nvim_create_autocmd("QuickFixCmdPost", {
   group = "MyFavorites",
-  event = "QuickFixCmdPost",
   pattern = "*grep*",
-  callback = [[cwindow]],
-}
+  command = [[cwindow]],
+})
 ```
 
 ### Bind with Lua functions
@@ -74,23 +69,19 @@ require'agrp'.set{
 In this case, it runs below.
 
 ```lua
-vim.api.nvim_create_augroups { name = "MyFavorites2", clear = true }
-vim.api.nvim_create_autocmd {
+vim.api.nvim_create_augroup("MyFavorites2")
+vim.api.nvim_create_autocmd("TextYankPost", {
   group = "MyFavorites2",
-  event = "TextYankPost",
-  pattern = "*",
-  callback = vim.highlight.on_yank,
-}
-vim.api.nvim_create_autocmd {
+  callback = function() vim.highlight.on_yank {} end,
+})
+vim.api.nvim_create_autocmd("VimEnter", {
   group = "MyFavorites2",
-  event = "VimEnter",
-  pattern = "*",
   callback = function()
     if vim.opt.readonly:get() then
       vim.api.nvim_set_keymap("n", "q", "<Cmd>qa<CR>", {})
     end
   end,
-}
+})
 ```
 
 ### Multi definitions for one event
