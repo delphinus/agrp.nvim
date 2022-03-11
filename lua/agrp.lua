@@ -4,15 +4,27 @@ local function is_vim_func_string(s)
   return type(s) == "string" and s:match "^[bwtglsav]:[_%d%w]+$"
 end
 
+local function create_autocmd(params)
+  local event = params.event
+  local opt = {
+    pattern = params.pattern,
+    once = params.once and true or false,
+    nested = params.nested and true or false,
+  }
+  if type(params.cb_or_cmd) == "function" or is_vim_func_string(params.cb_or_cmd) then
+    opt.callback = params.cb_or_cmd
+  else
+    opt.command = params.cb_or_cmd
+  end
+  vim.api.nvim_create_autocmd(event, opt)
+end
+
 local function manage_definitions(definitions, group)
   for key, definition in pairs(definitions) do
     vim.validate {
       definition = { definition, "table" },
     }
     -- When group is nil, it does not set augroup.
-    local opt = { group = group }
-    local event
-    local cb_or_cmd
     if type(key) == "number" then
       -- Each definition has all params to set.
       -- {
@@ -21,16 +33,20 @@ local function manage_definitions(definitions, group)
       -- }
       if #definition == 3 then
         -- ex. {'TextYankPost', '*', function() vim.highlight.on_yank{} end},
-        opt.pattern = definition[2]
-        event = definition[1]
-        cb_or_cmd = definition[3]
+        create_autocmd {
+          event = definition[1],
+          pattern = definition[2],
+          cb_or_cmd = definition[3],
+        }
       elseif #definition == 4 then
         -- ex. {'VimEnter', '*', {'once'}, function() vim.cmd[[echo 'Hello, World!']] end},
-        opt.once = definition[1].once and true or false
-        opt.nested = definition[1].nested and true or false
-        opt.pattern = definition[3]
-        event = definition[2]
-        cb_or_cmd = definition[4]
+        create_autocmd {
+          event = definition[1],
+          pattern = definition[2],
+          once = definition[3].once,
+          nested = definition[3].nested,
+          cb_or_cmd = definition[4],
+        }
       else
         error "each definition should have 3 values (+options (once, nested))"
       end
@@ -43,21 +59,25 @@ local function manage_definitions(definitions, group)
       --   },
       -- }
       for _, d in ipairs(definition) do
-        if #d == 2 or #d == 3 then
-          opt.pattern = d[1]
-          event = key
-          cb_or_cmd = d[2]
+        if #d == 2 then
+          create_autocmd {
+            event = key,
+            pattern = d[1],
+            cb_or_cmd = d[2],
+          }
+        elseif #d == 3 then
+          create_autocmd {
+            event = key,
+            pattern = d[1],
+            once = d[2].once,
+            nested = d[2].nested,
+            cb_or_cmd = d[3],
+          }
         else
           error "each definition should have 2 values (+options (once, nested))"
         end
       end
     end
-    if type(cb_or_cmd) == "function" or is_vim_func_string(cb_or_cmd) then
-      opt.callback = cb_or_cmd
-    else
-      opt.command = cb_or_cmd
-    end
-    vim.api.nvim_create_autocmd(event, opt)
   end
 end
 
