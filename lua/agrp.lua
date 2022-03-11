@@ -57,7 +57,7 @@ local function manage_definitions(definitions, group)
     else
       opt.command = cb_or_cmd
     end
-    vim.api.nvim_create_autocmd(event,opt)
+    vim.api.nvim_create_autocmd(event, opt)
   end
 end
 
