@@ -34,6 +34,7 @@ local function manage_definitions(definitions, group)
       if #definition == 3 then
         -- ex. {'TextYankPost', '*', function() vim.highlight.on_yank{} end},
         create_autocmd {
+          group = group,
           event = definition[1],
           pattern = definition[2],
           cb_or_cmd = definition[3],
@@ -41,6 +42,7 @@ local function manage_definitions(definitions, group)
       elseif #definition == 4 then
         -- ex. {'VimEnter', '*', {'once'}, function() vim.cmd[[echo 'Hello, World!']] end},
         create_autocmd {
+          group = group,
           event = definition[1],
           pattern = definition[2],
           once = definition[3].once,
@@ -61,12 +63,14 @@ local function manage_definitions(definitions, group)
       for _, d in ipairs(definition) do
         if #d == 2 then
           create_autocmd {
+            group = group,
             event = key,
             pattern = d[1],
             cb_or_cmd = d[2],
           }
         elseif #d == 3 then
           create_autocmd {
+            group = group,
             event = key,
             pattern = d[1],
             once = d[2].once,
