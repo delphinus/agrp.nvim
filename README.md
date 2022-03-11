@@ -17,7 +17,7 @@ require'agrp'.set{
   },
   MyFavorites = {
     {'VimEnter', '*', 'doautocmd ColorScheme solarized8'},
-    {'QuickFixCmdPost', '*grrep*', 'cwindow'},
+    {'QuickFixCmdPost', '*grep*', 'cwindow'},
   },
 }
 ```
@@ -51,7 +51,13 @@ It can binds Lua functions.
 require'agrp'.set{
   MyFavorites2 = {
     -- See https://github.com/neovim/neovim/pull/12279
-    {'TextYankPost', '*', vim.highlight.on_yank},
+    {
+      'TextYankPost',
+      '*',
+      function()
+        vim.highlight.on_yank {}
+      end,
+    },
     -- Quit with `q` when run with `-R`
     {
       'VimEnter',
