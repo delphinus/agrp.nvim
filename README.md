@@ -139,7 +139,3 @@ require'agrp'.set{
   },
 }
 ```
-
-## Caveats
-
-This plugin itself will be deprecated when the [official PR][] or similar one will be merged.
