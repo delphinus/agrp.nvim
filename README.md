@@ -4,11 +4,7 @@ Yet another utility to set augroup in Neovim
 
 ## What's this?
 
-This makes you easily define augroup & autocmd in Lua instead of executing Vim commands.
-
-Yes, there is [official PR][] for the same purpose, but it shows no signs of being merged. I cannot stand anymore! ;(
-
-[official PR]: https://github.com/neovim/neovim/pull/12378
+This makes you easily define augroup & autocmd with Neovim native APIs. There are `vim.api.nvim_create_augroup` & `vim.api.nvim_create_autocmd`, but they have a bit complex syntax. This plugin is meant to be used as a syntax sugar.
 
 ## Usage
 
@@ -21,24 +17,30 @@ require'agrp'.set{
   },
   MyFavorites = {
     {'VimEnter', '*', 'doautocmd ColorScheme solarized8'},
-    {'QuickFixCmdPost', '*grrep*', 'cwindow'},
+    {'QuickFixCmdPost', '*grep*', 'cwindow'},
   },
 }
 ```
 
-This will execute command below.
+This will execute the script below.
 
-```vim
-augroup MyHelloWorld
-  autocmd!
-  autocmd VimEnter * echo 'Hello World!'
-augroup END
+```lua
+vim.api.nvim_create_augroup("MyHelloWorld")
+vim.api.nvim_create_autocmd("VimEnter", {
+  group = "MyHelloWorld",
+  command = [[echo 'Hello World!']],
+})
 
-augroup MyFavorites
-  autocmd!
-  autocmd VimEnter * doautocmd ColorScheme solarized8
-  autocmd QuickFixCmdPost *grep* cwindow
-augroup END
+vim.api.nvim_create_augroup("MyFavorites")
+vim.api.nvim_create_autocmd("VimEnter", {
+  group = "MyFavorites",
+  command = [[doautocmd ColorScheme solarized8]],
+})
+vim.api.nvim_create_autocmd("QuickFixCmdPost", {
+  group = "MyFavorites",
+  pattern = "*grep*",
+  command = [[cwindow]],
+})
 ```
 
 ### Bind with Lua functions
@@ -49,7 +51,13 @@ It can binds Lua functions.
 require'agrp'.set{
   MyFavorites2 = {
     -- See https://github.com/neovim/neovim/pull/12279
-    {'TextYankPost', '*', vim.highlight.on_yank},
+    {
+      'TextYankPost',
+      '*',
+      function()
+        vim.highlight.on_yank {}
+      end,
+    },
     -- Quit with `q` when run with `-R`
     {
       'VimEnter',
@@ -66,13 +74,20 @@ require'agrp'.set{
 
 In this case, it runs below.
 
-```vim
-" Lua functions will be wrapped and stored in this plugin.
-augroup MyFavorites2
-  autocmd!
-  autocmd TextYankPost * lua require'agrp'.funcs[1]()
-  autocmd VimEnter * lua require'agrp'.funcs[2]()
-augroup END
+```lua
+vim.api.nvim_create_augroup("MyFavorites2")
+vim.api.nvim_create_autocmd("TextYankPost", {
+  group = "MyFavorites2",
+  callback = function() vim.highlight.on_yank {} end,
+})
+vim.api.nvim_create_autocmd("VimEnter", {
+  group = "MyFavorites2",
+  callback = function()
+    if vim.opt.readonly:get() then
+      vim.api.nvim_set_keymap("n", "q", "<Cmd>qa<CR>", {})
+    end
+  end,
+})
 ```
 
 ### Multi definitions for one event
